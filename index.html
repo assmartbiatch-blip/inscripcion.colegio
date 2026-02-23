@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liceo Los Andes · Inscripciones 2025</title>
+    <!-- jsPDF para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background-color: #FFF3E0; /* beige principal */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #FF8A5C; /* naranja */
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 2px 2px 0 #FFD1DC;
+        }
+
+        .header p {
+            color: #4A4A4A;
+            font-size: 1.2rem;
+            background: rgba(255, 209, 220, 0.3);
+            display: inline-block;
+            padding: 5px 20px;
+            border-radius: 50px;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 40px;
+            padding: 45px;
+            box-shadow: 0 25px 45px rgba(255, 138, 92, 0.25);
+            border: 2px solid #FFD1DC;
+            transition: all 0.3s;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #E5C5A4;
+            z-index: 1;
+        }
+
+        .step {
+            background: #FFF3E0;
+            border: 3px solid #FFD1DC;
+            color: #4A4A4A;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+            position: relative;
+            z-index: 2;
+            transition: 0.3s;
+        }
+
+        .step.active {
+            background: #FF8A5C;
+            border-color: #FF8A5C;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px #FFD1DC;
+        }
+
+        .step.completed {
+            background: #FF8A5C;
+            border-color: #FF8A5C;
+            color: white;
+        }
+
+        .form-step {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4A4A4A;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #E5C5A4;
+            border-radius: 20px;
+            font-size: 1rem;
+            background: #FFF9F5;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #FF8A5C;
+            box-shadow: 0 0 0 4px rgba(255, 138, 92, 0.2);
+        }
+
+        input.invalid {
+            border-color: #ff4444;
+            background: #fff0f0;
+        }
+
+        .validation-message {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            padding-left: 10px;
+            color: #ff4444;
+        }
+
+        .success-message {
+            color: #00a86b;
+            font-weight: 500;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-box {
+            background: #FFD1DC40;
+            border-left: 5px solid #FF8A5C;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: #FF8A5C;
+            color: white;
+            border: none;
+            padding: 16px 35px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            background: #ff6b3d;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px #FF8A5C80;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #E5C5A4;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #d6b392;
+        }
+
+        .resumen-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: #FFF9F5;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .resumen-table th {
+            background: #FF8A5C;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .resumen-table td {
+            padding: 12px;
+            border-bottom: 1px solid #FFD1DC;
+        }
+
+        .resumen-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            max-width: 500px;
+            text-align: center;
+            border: 4px solid #FFD1DC;
+        }
+
+        .modal-content h2 {
+            color: #FF8A5C;
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            background: #FF8A5C;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            margin: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .badge {
+            background: #FFD1DC;
+            color: #4A4A4A;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ U.E. Colegio Los Andes</h1>
+            <p>Inscripciones 2025 · Verificación y registro</p>
+        </div>
+
+        <div class="card">
+            <!-- Indicador de pasos -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">1</div>
+                <div class="step" id="step2">2</div>
+                <div class="step" id="step3">3</div>
+            </div>
+
+            <!-- PASO 1: VERIFICACIÓN DE ESTUDIANTE -->
+            <div id="step1-form" class="form-step active">
+                <h2 style="color: #FF8A5C; margin-bottom: 20px;">🔍 Verificar estudiante</h2>
+                <p class="badge" style="margin-bottom: 25px;">Ingrese la cédula para comprobar si está habilitado</p>
+
+                <div class="form-group">
+                    <label for="cedula_estudiante">Cédula del estudiante (Ej: V-12345678)</label>
+                    <input type="text" id="cedula_estudiante" placeholder="V-12345678" oninput="validarCedula()">
+                    <div id="cedula-validation" class="validation-message"></div>
+                </div>
+
+                <div id="info-estudiante" class="info-box" style="display: none;">
+                    <!-- Se llena con JS -->
+                </div>
+
+                <button class="btn" id="btn-verificar" onclick="verificarEstudiante()">🔍 Verificar</button>
+                <button class="btn btn-secondary" id="btn-paso2" disabled onclick="irPaso2()">➡️ Continuar con datos</button>
+            </div>
+
+            <!-- PASO 2: FORMULARIO COMPLETO -->
+            <div id="step2-form" class="form-step">
+                <h2 style="color: #FF8A5C; margin-bottom: 20px;">📋 Datos de inscripción</h2>
+                
+                <form id="form-inscripcion" onsubmit="event.preventDefault(); revisarDatos()">
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="nombres">Nombres completos</label>
+                            <input type="text" id="nombres" onblur="validarTexto(this, 'nombre-validation')">
+                            <div id="nombre-validation" class="validation-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellidos">Apellidos completos</label>
+                            <input type="text" id="apellidos" onblur="validarTexto(this, 'apellido-validation')">
+                            <div id="apellido-validation" class="validation-message"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                            <input type="date" id="fecha_nacimiento" onchange="calcularEdad()">
+                        </div>
+                        <div class="form-group">
+                            <label for="edad">Edad</label>
+                            <input type="text" id="edad" readonly>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="ano_cursar">Año a cursar</label>
+                            <select id="ano_cursar">
+                                <option value="">Seleccione...</option>
+                                <option value="1">1er año</option>
+                                <option value="2">2do año</option>
+                                <option value="3">3er año</option>
+                                <option value="4">4to año</option>
+                                <option value="5">5to año</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo_ingreso">Tipo de ingreso</label>
+                            <select id="tipo_ingreso">
+                                <option value="nuevo">Nuevo ingreso</option>
+                                <option value="regular">Regular (ya cursaba)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px; color: #4A4A4A;">👪 Datos del representante</h3>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="rep_nombres">Nombres</label>
+                            <input type="text" id="rep_nombres">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep_apellidos">Apellidos</label>
+                            <input type="text" id="rep_apellidos">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="rep_cedula">Cédula</label>
+                            <input type="text" id="rep_cedula" placeholder="V-12345678">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep_telefono">Teléfono</label>
+                            <input type="tel" id="rep_telefono" placeholder="0412-1234567">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rep_email">Correo electrónico</label>
+                        <input type="email" id="rep_email" placeholder="ejemplo@correo.com">
+                    </div>
+
+                    <button type="submit" class="btn">📋 Revisar datos</button>
+                    <button type="button" class="btn btn-secondary" onclick="irPaso1()">⬅️ Volver</button>
+                </form>
+            </div>
+
+            <!-- PASO 3: CONFIRMACIÓN Y RESÚMEN -->
+            <div id="step3-form" class="form-step">
+                <h2 style="color: #FF8A5C; margin-bottom: 20px;">✅ Confirmar inscripción</h2>
+                
+                <div id="resumen-contenido"></div>
+
+                <button class="btn" onclick="confirmarInscripcion()">📌 Confirmar y generar PDF</button>
+                <button class="btn btn-secondary" onclick="irPaso2()">⬅️ Editar datos</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== VARIABLES GLOBALES ==========
+        let estudianteVerificado = null;
+        let datosInscripcion = {};
+
+        // ========== VALIDACIONES EN TIEMPO REAL ==========
+        function validarCedula() {
+            const input = document.getElementById('cedula_estudiante');
+            const mensaje = document.getElementById('cedula-validation');
+            const patron = /^[VE]-?\d{5,8}$/i;
+
+            if (!patron.test(input.value)) {
+                mensaje.textContent = '❌ Formato inválido (Ej: V-12345678)';
+                input.classList.add('invalid');
+                return false;
+            } else {
+                mensaje.textContent = '✅ Formato correcto';
+                mensaje.classList.add('success-message');
+                input.classList.remove('invalid');
+                return true;
+            }
+        }
+
+        function validarTexto(input, divId) {
+            const mensaje = document.getElementById(divId);
+            if (input.value.trim().length < 3) {
+                mensaje.textContent = '❌ Mínimo 3 caracteres';
+                input.classList.add('invalid');
+                return false;
+            } else {
+                mensaje.textContent = '✅ Correcto';
+                mensaje.classList.add('success-message');
+                input.classList.remove('invalid');
+                return true;
+            }
+        }
+
+        function calcularEdad() {
+            const fechaNac = document.getElementById('fecha_nacimiento').value;
+            if (!fechaNac) return;
+
+            const hoy = new Date();
+            const nacimiento = new Date(fechaNac);
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                edad--;
+            }
+
+            document.getElementById('edad').value = edad + ' años';
+        }
+
+        // ========== VERIFICACIÓN SIMULADA ==========
+        function verificarEstudiante() {
+            if (!validarCedula()) return;
+
+            const cedula = document.getElementById('cedula_estudiante').value;
+            const infoDiv = document.getElementById('info-estudiante');
+            const btnPaso2 = document.getElementById('btn-paso2');
+
+            // SIMULACIÓN: base de datos ficticia
+            const dbEstudiantes = {
+                'V-12345678': { nombres: 'María', apellidos: 'González', ano: '1', habilitado: true },
+                'V-87654321': { nombres: 'José', apellidos: 'Pérez', ano: '3', habilitado: true },
+                'V-11223344': { nombres: 'Ana', apellidos: 'Flores', ano: '5', habilitado: false }
+            };
+
+            estudianteVerificado = dbEstudiantes[cedula];
+
+            if (estudianteVerificado && estudianteVerificado.habilitado) {
+                infoDiv.style.display = 'block';
+                infoDiv.innerHTML = `
+                    <strong>✅ Estudiante HABILITADO</strong><br>
+                    ${estudianteVerificado.nombres} ${estudianteVerificado.apellidos}<br>
+                    Año sugerido: ${estudianteVerificado.ano}° año
+                `;
+                btnPaso2.disabled = false;
+                
+                // Precargar datos si existen
+                document.getElementById('nombres').value = estudianteVerificado.nombres || '';
+                document.getElementById('apellidos').value = estudianteVerificado.apellidos || '';
+            } else {
+                infoDiv.style.display = 'block';
+                infoDiv.innerHTML = '<strong style="color:#ff4444;">❌ Estudiante NO HABILITADO. Contactar dirección.</strong>';
+                btnPaso2.disabled = true;
+                estudianteVerificado = null;
+            }
+        }
+
+        // ========== NAVEGACIÓN ENTRE PASOS ==========
+        function irPaso1() {
+            document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step1-form').classList.add('active');
+            
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active', 'completed'));
+            document.getElementById('step1').classList.add('active');
+        }
+
+        function irPaso2() {
+            if (!estudianteVerificado) {
+                alert('Primero debe verificar un estudiante');
+                return;
+            }
+
+            document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step2-form').classList.add('active');
+            
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active', 'completed'));
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step2').classList.add('active');
+        }
+
+        function revisarDatos() {
+            // Validar campos obligatorios
+            const nombres = document.getElementById('nombres').value.trim();
+            const apellidos = document.getElementById('apellidos').value.trim();
+            const fechaNac = document.getElementById('fecha_nacimiento').value;
+            const anoCursar = document.getElementById('ano_cursar').value;
+            const repNombres = document.getElementById('rep_nombres').value.trim();
+            const repCedula = document.getElementById('rep_cedula').value.trim();
+
+            if (!nombres || !apellidos || !fechaNac || !anoCursar || !repNombres || !repCedula) {
+                alert('Complete todos los campos obligatorios');
+                return;
+            }
+
+            // Guardar datos
+            datosInscripcion = {
+                estudiante: {
+                    cedula: document.getElementById('cedula_estudiante').value,
+                    nombres: nombres,
+                    apellidos: apellidos,
+                    fechaNacimiento: fechaNac,
+                    edad: document.getElementById('edad').value,
+                    anoCursar: anoCursar,
+                    tipoIngreso: document.getElementById('tipo_ingreso').value
+                },
+                representante: {
+                    nombres: repNombres,
+                    apellidos: document.getElementById('rep_apellidos').value.trim(),
+                    cedula: repCedula,
+                    telefono: document.getElementById('rep_telefono').value.trim(),
+                    email: document.getElementById('rep_email').value.trim()
+                }
+            };
+
+            // Mostrar resumen
+            mostrarResumen();
+            
+            // Ir al paso 3
+            document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step3-form').classList.add('active');
+            
+            document.getElementById('step2').classList.add('completed');
+            document.getElementById('step3').classList.add('active');
+        }
+
+        function mostrarResumen() {
+            const resumen = document.getElementById('resumen-contenido');
+            const d = datosInscripcion;
+            
+            resumen.innerHTML = `
+                <table class="resumen-table">
+                    <tr><th colspan="2">👨‍🎓 Datos del estudiante</th></tr>
+                    <tr><td>Cédula:</td><td>${d.estudiante.cedula}</td></tr>
+                    <tr><td>Nombre completo:</td><td>${d.estudiante.nombres} ${d.estudiante.apellidos}</td></tr>
+                    <tr><td>Fecha nacimiento:</td><td>${d.estudiante.fechaNacimiento} (${d.estudiante.edad})</td></tr>
+                    <tr><td>Año a cursar:</td><td>${d.estudiante.anoCursar}° año</td></tr>
+                    <tr><td>Tipo ingreso:</td><td>${d.estudiante.tipoIngreso === 'nuevo' ? 'Nuevo' : 'Regular'}</td></tr>
+                    
+                    <tr><th colspan="2">👪 Representante</th></tr>
+                    <tr><td>Cédula:</td><td>${d.representante.cedula}</td></tr>
+                    <tr><td>Nombre:</td><td>${d.representante.nombres} ${d.representante.apellidos}</td></tr>
+                    <tr><td>Teléfono:</td><td>${d.representante.telefono || 'No indicado'}</td></tr>
+                    <tr><td>Email:</td><td>${d.representante.email || 'No indicado'}</td></tr>
+                </table>
+                <p style="text-align:center; margin:15px 0;">Revise que todos los datos sean correctos antes de confirmar.</p>
+            `;
+        }
+
+        // ========== CONFIRMACIÓN Y PDF ==========
+        function confirmarInscripcion() {
+            // Generar número de control
+            const numControl = 'INS-' + Date.now().toString().slice(-8);
+            
+            // Mostrar modal de éxito
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2>✅ ¡Inscripción confirmada!</h2>
+                    <p>Número de control: <strong>${numControl}</strong></p>
+                    <p>Estudiante: ${datosInscripcion.estudiante.nombres} ${datosInscripcion.estudiante.apellidos}</p>
+                    <p>Fecha: ${new Date().toLocaleDateString('es-VE')}</p>
+                    <button onclick="generarPDF()">📥 Descargar PDF</button>
+                    <button onclick="this.closest('.modal').remove()">✖️ Cerrar</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const d = datosInscripcion;
+            const fecha = new Date().toLocaleDateString('es-VE');
+
+            doc.setFillColor(255, 243, 224); // beige
+            doc.rect(0, 0, 210, 297, 'F');
+            
+            doc.setFontSize(22);
+            doc.setTextColor(255, 138, 92); // naranja
+            doc.text('U.E. Colegio Los Andes', 20, 30);
+            
+            doc.setFontSize(16);
+            doc.setTextColor(74, 74, 74);
+            doc.text('Comprobante de Inscripción', 20, 45);
+            
+            doc.setFontSize(12);
+            doc.text(`Fecha: ${fecha}`, 20, 60);
+            doc.text(`N° Control: INS-${Date.now().toString().slice(-8)}`, 20, 70);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(255, 138, 92);
+            doc.text('Datos del estudiante', 20, 90);
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(11);
+            doc.text(`Cédula: ${d.estudiante.cedula}`, 20, 100);
+            doc.text(`Nombre: ${d.estudiante.nombres} ${d.estudiante.apellidos}`, 20, 110);
+            doc.text(`Fecha Nac: ${d.estudiante.fechaNacimiento} (${d.estudiante.edad})`, 20, 120);
+            doc.text(`Año a cursar: ${d.estudiante.anoCursar}°`, 20, 130);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(255, 138, 92);
+            doc.text('Representante', 20, 150);
+            
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Cédula: ${d.representante.cedula}`, 20, 160);
+            doc.text(`Nombre: ${d.representante.nombres} ${d.representante.apellidos}`, 20, 170);
+            doc.text(`Teléfono: ${d.representante.telefono || 'N/A'}`, 20, 180);
+            doc.text(`Email: ${d.representante.email || 'N/A'}`, 20, 190);
+            
+            doc.save('inscripcion-colegio-andes.pdf');
+        }
+
+        // ========== FUNCIONES EXTRA ==========
+        function irPaso1() {
+            document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step1-form').classList.add('active');
+            
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active', 'completed'));
+            document.getElementById('step1').classList.add('active');
+        }
+
+        function irPaso2() {
+            if (!estudianteVerificado) {
+                alert('Primero debe verificar un estudiante');
+                return;
+            }
+
+            document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step2-form').classList.add('active');
+            
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active', 'completed'));
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step2').classList.add('active');
+        }
+
+        // Inicializar event listeners
+        window.onload = function() {
+            // Precargar algo si quieres
+        };
+    </script>
+</body>
+</html>
